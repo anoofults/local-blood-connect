@@ -87,24 +87,58 @@ Help save lives by connecting blood donors with recipients and providing efficie
    - Backend API: http://localhost:3001
    - Admin login: `admin@bloodlink.local` / `admin123` (change immediately!)
 
-### Option 2: Docker Compose (Recommended)
+### Option 2: Docker Compose (Recommended) ⭐
+
+**The easiest way to run BloodLink Local - everything in one command!**
 
 1. **Install Docker Desktop** for Windows from https://www.docker.com/products/docker-desktop/
 
-2. **Start services**
+2. **Start the entire application** (Frontend + Backend + Database + pgAdmin)
    ```bash
    docker-compose up -d
    ```
 
-3. **Access services**
-   - Frontend: http://localhost:8080
-   - Backend: http://localhost:3001
-   - pgAdmin: http://localhost:5050 (`admin@bloodlink.local` / `admin`)
+   This single command will:
+   - Build and start the React frontend (port 8080)
+   - Build and start the Node.js backend (port 3001)
+   - Start PostgreSQL database (port 5432)
+   - Start pgAdmin for database management (port 5050)
+   - Run all database migrations automatically
 
-4. **Stop services**
+3. **Access the application**
+   - **Frontend**: http://localhost:8080 (Main application)
+   - **Backend API**: http://localhost:3001 (REST API)
+   - **pgAdmin**: http://localhost:5050 (Database management UI)
+     - Email: `admin@bloodlink.local`
+     - Password: `admin`
+
+4. **View logs** (optional)
+   ```bash
+   # All services
+   docker-compose logs -f
+
+   # Specific service
+   docker-compose logs -f frontend
+   docker-compose logs -f backend
+   docker-compose logs -f postgres
+   ```
+
+5. **Stop services**
    ```bash
    docker-compose down
    ```
+
+6. **Stop and remove all data** (including database)
+   ```bash
+   docker-compose down -v
+   ```
+
+**First Time Setup:**
+- Default admin credentials are seeded automatically
+- Login at http://localhost:8080/admin/login
+- Email: `admin@bloodlink.local`
+- Password: `admin123`
+- **⚠️ IMPORTANT: Change the admin password immediately after first login!**
 
 ## 📁 Project Structure
 
@@ -247,7 +281,51 @@ See `backend/README.md` for detailed API documentation.
 
 ## 🐛 Troubleshooting
 
-### PostgreSQL won't start
+### Docker Issues
+
+#### Containers won't start
+```bash
+# Check Docker Desktop is running
+docker info
+
+# View container status
+docker-compose ps
+
+# View logs for specific service
+docker-compose logs backend
+docker-compose logs frontend
+docker-compose logs postgres
+```
+
+#### Port already in use
+```bash
+# Check what's using the ports
+netstat -ano | findstr :8080  # Frontend
+netstat -ano | findstr :3001  # Backend
+netstat -ano | findstr :5432  # PostgreSQL
+netstat -ano | findstr :5050  # pgAdmin
+
+# Kill the process or change ports in docker-compose.yml
+```
+
+#### Database connection errors in Docker
+- Wait 30 seconds for PostgreSQL to fully initialize on first run
+- Check logs: `docker-compose logs postgres`
+- Verify migrations ran: `docker-compose logs backend`
+
+#### Rebuilding after code changes
+```bash
+# Rebuild and restart services
+docker-compose up -d --build
+
+# Rebuild specific service
+docker-compose up -d --build frontend
+docker-compose up -d --build backend
+```
+
+### Local Setup Issues
+
+### PostgreSQL won't start (Local)
 ```powershell
 # Check service status
 Get-Service postgresql*
