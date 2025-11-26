@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: bloodlink-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bloodlink_user
+      POSTGRES_PASSWORD: bloodlink_password
+      POSTGRES_DB: bloodlink_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - bloodlink-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloodlink_user -d bloodlink_local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin - Database Management UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bloodlink-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bloodlink.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - bloodlink-network
+    depends_on:
+      - postgres
+
+  # Optional: Backend API (Node.js)
+  # Uncomment if you want to run the backend in Docker
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: bloodlink-backend
+  #   restart: unless-stopped
+  #   environment:
+  #     DATABASE_URL: postgresql://bloodlink_user:bloodlink_password@postgres:5432/bloodlink_local
+  #     JWT_SECRET: your-super-secret-jwt-key
+  #     SESSION_SECRET: your-super-secret-session-key
+  #     PORT: 3001
+  #     NODE_ENV: development
+  #     FRONTEND_URL: http://localhost:8080
+  #   ports:
+  #     - "3001:3001"
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - bloodlink-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  bloodlink-network:
+    driver: bridge
